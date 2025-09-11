@@ -41,28 +41,32 @@ def contains_forbidden(values: Any)->bool:
     return False
 
 
-def fetch_vendor_data(filter : Dict[str,Any])->Dict[str,Any]:
-    
-    
-    valid_filters , rejected = validate_filters(filter)
+def fetch_vendor_data(filters: Dict[str, Any]) -> Dict[str, Any]:
+    print("filters", filters)
+
+    valid_filters, rejected = validate_filters(filters)
 
     if rejected:
         return {
-            "error":"invaild_filter",
-            "invaild":rejected,
-            "allowed":list(ALLOWED_FILTERS)
+            "error": "invalid_filters",
+            "invalid": rejected,
+            "allowed": list(ALLOWED_FILTERS)
         }
-    
+
     if not valid_filters:
         return {
-            "error":"missing_filters",
-            "missing":list(ALLOWED_FILTERS)
+            "error": "missing_filters",
+            "missing": list(ALLOWED_FILTERS)
         }
-    for key,val in valid_filters.items():
+
+    for key, val in valid_filters.items():
         if contains_forbidden(val):
-            return {"error": "forbidden keyword", "field":key, "value":val}
-    
-    db = get_db()
+            return {
+                "error": "forbidden_keyword",
+                "value": val
+            }
+
+    db = next(get_db())
     try:
         query = select(
             Vendor.c.name,
@@ -74,33 +78,33 @@ def fetch_vendor_data(filter : Dict[str,Any])->Dict[str,Any]:
             Vendor.c.email
         ).limit(5)
 
-        for key , value in valid_filters.items():
+        for key, value in valid_filters.items():
             col = Vendor.c.get(key)
-
-            if isinstance(value,list):
+            if isinstance(value, list):
                 for v in value:
-                    query = query.where(text(f"JSON_CONTAINS({key},'\"{v}\"')"))
+                    query = query.where(text(f"JSON_CONTAINS({key}, '\"{v}\"')"))
             else:
                 query = query.where(col.like(f"%{value}%"))
 
         rows = db.execute(query).fetchall()
-
         results = []
         for row in rows:
             results.append({
-                "name":row.name,
-                "company":row.company,
-                "services":row.services,
+                "name": row.name,
+                "company": row.company,
+                "services": row.services,
                 "cities": row.cities,
                 "countries": row.countries,
-                "contact":row.contact,
-                "email":row.email,
+                "contact": row.contact,
+                "email": row.email,
             })
 
         if not results:
-            return {"results":[], "note":"No vendors found."}
+            return {"results": []}
 
-        return {"results":results}
-    except Exception as e :
-        return {"error":f"came from fetch {e}"}
+        return {"results": results}
+
+    except Exception as e:
+        return {"error": "db_error", "message": str(e)}
+
 
