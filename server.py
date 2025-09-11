@@ -8,6 +8,7 @@ from app.routes.protected import router as protected_router
 from app.routes.qa import router as qa_router
 from app.routes.ingest import router as ingest
 
+
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
@@ -54,6 +55,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 # Mount routers
 app.include_router(auth_router)

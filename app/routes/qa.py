@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form, Depends
 from sqlalchemy.orm import Session
 from app.langchain.qa_chain import get_qa_chain
+from app.langchain.llm import chat_with_llm
 from app.db.database import get_db
 from app.models.chat import ChatSession, ChatMessage
 from uuid import UUID
@@ -71,6 +72,7 @@ async def ask_question(
             "question": question,
             "history": chat_history
         })
+
     except Exception as e:
         return {"error": "Invalid response format from AI", "raw_output": str(e)}
 
@@ -150,3 +152,11 @@ async def get_chat_history(session_id: str, db: Session = Depends(get_db)):
         "session_id": session_id,
         "messages": history
     }
+
+@router.post("/chat_llm")
+def chat_llm_bot(User_query:str=Form(...)):
+    print(User_query)
+    resp = chat_with_llm("1",User_query)
+    return {"response":resp}
+   
+   

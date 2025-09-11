@@ -90,6 +90,7 @@ async def get_qa_chain(
     """
 
     async def get_context(question: str) -> str:
+        print("question",question)
         results = QDRANT.similarity_search(question)
 
         # Extract page_content from each Document and join
@@ -98,6 +99,7 @@ async def get_qa_chain(
 
 
     async def chain_with_context(inputs: dict) -> dict:
+        print("inputs",inputs)
         context = await get_context(inputs["question"])
         return {**inputs, "context": context}
 
@@ -126,5 +128,5 @@ async def get_qa_chain(
         | llm 
         | parser
     )
-    
+    print("chain",chain)
     return chain

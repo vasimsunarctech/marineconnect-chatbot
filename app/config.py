@@ -1,8 +1,15 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent / ".env"
+# print(env_path)
+load_dotenv(dotenv_path=env_path)
 
+
+load_dotenv('./.env')
+
+# print(os.getenv("OPENAI_API_KEY"))
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
