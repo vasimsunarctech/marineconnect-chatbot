@@ -1,13 +1,14 @@
+from langchain_core.output_parsers import JsonOutputParser
+from app.services.embedding_model import EmbeddingModel
+from app.utils.qdrant_client import QdrantVectorDB
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import Runnable
 from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import JsonOutputParser
 from pydantic import BaseModel, Field
 from app.config import OPENAI_API_KEY
-from app.utils.qdrant_client import QdrantVectorDB
-from app.services.embedding_model import EmbeddingModel
+import os
 
-OWNER = 'maritime'
+OWNER = os.getenv("QDRANT_COLLECTION", "maritime")
 EMBEDDING = EmbeddingModel().get()
 
 QDRANT = QdrantVectorDB(OWNER, EMBEDDING)
@@ -78,7 +79,7 @@ async def get_qa_chain(
 
     ### When answer is unknown:
     {{
-    "summary": "I'm so sorry, but at the moment I don't have an answer available. NEED MORE HELP? YOU CAN CONTACT [STERLING MACHINERY](https://www.sterlingmachinery.com/) FOR MORE HELP.",
+    "summary": "I'm so sorry, but at the moment I don't have an answer available.",
     "advice_points": [],
     "followup_questions": []
     }}
