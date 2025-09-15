@@ -1,8 +1,9 @@
+from app.Http.Middleware.authenticate import authenticate
 from fastapi import APIRouter, Depends
-from app.auth.dependencies import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
-@router.get("/protected")
-def protected_route(user: str = Depends(get_current_user)):
-    return {"message": f"Hello {user}, you're authenticated!"}
+@router.get("/me")
+def me(user: User = Depends(authenticate)):
+    return {"id": user.id, "name": user.name, "email": user.email}

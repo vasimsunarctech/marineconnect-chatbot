@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.auth.routes import router as auth_router
 from app.routes.protected import router as protected_router
 from app.routes.qa import router as qa_router
 from app.routes.ingest import router as ingest
@@ -56,7 +55,6 @@ async def health_check():
     return {"status": "healthy"}
 
 # Mount routers
-app.include_router(auth_router)
 app.include_router(protected_router)
 app.include_router(qa_router)
 app.include_router(ingest)

@@ -1,26 +1,28 @@
 from fastapi import APIRouter, HTTPException, Form, Depends
-from sqlalchemy.orm import Session
-from app.langchain.qa_chain import get_qa_chain
-from app.db.database import get_db
-from app.models.chat import ChatSession, ChatMessage
-from uuid import UUID
 from langchain_core.messages import HumanMessage, AIMessage
+from app.Http.Middleware.authenticate import authenticate
+from app.models.chat import ChatSession, ChatMessage
+from app.langchain.qa_chain import get_qa_chain
+from sqlalchemy.orm import Session
+from app.db.database import get_db
+from app.models.user import User
 from sqlalchemy import desc
+from uuid import UUID
 import json
 
 router = APIRouter()
 
 @router.post("/chat/new")
-async def create_chat(question: str = Form(...), db: Session = Depends(get_db)):
-    chat_session = ChatSession(user_id=1, title=question)
+async def create_chat(question: str = Form(...), user: User = Depends(authenticate), db: Session = Depends(get_db)):
+    chat_session = ChatSession(user_id=user.id, title=question)
     db.add(chat_session)
     db.commit()
     db.refresh(chat_session)
     return {"session_id": chat_session.id, "title": chat_session.title}
 
 @router.get("/chats")
-async def get_chats(db: Session = Depends(get_db)):
-    sessions = db.query(ChatSession).all()
+async def get_chats(db: Session = Depends(get_db), user: User = Depends(authenticate)):
+    sessions = db.query(ChatSession).filter(ChatSession.user_id == user.id).all()
     
     return {"sessions": sessions}
 
@@ -29,7 +31,8 @@ async def get_chats(db: Session = Depends(get_db)):
 async def ask_question(
     session_id: str,
     question: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(authenticate)
 ):
     # Validate UUID format (optional but cleaner)
     try:
@@ -38,7 +41,7 @@ async def ask_question(
         raise HTTPException(status_code=400, detail="Invalid session ID format")
 
     # Get chat session
-    session = db.query(ChatSession).filter(ChatSession.id == str(uuid_obj)).first()
+    session = db.query(ChatSession).filter(ChatSession.id == str(uuid_obj), ChatSession.user_id == user.id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Chat session not found")
     
@@ -120,8 +123,9 @@ async def ask_question(
         ]
     }
 
+
 @router.get("/chat/{session_id}/history")
-async def get_chat_history(session_id: str, db: Session = Depends(get_db)):
+async def get_chat_history(session_id: str, db: Session = Depends(get_db), user: User = Depends(authenticate)):
     messages = db.query(ChatMessage).filter(
         ChatMessage.session_id == session_id
     ).order_by(ChatMessage.id).all()
