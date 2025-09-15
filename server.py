@@ -1,18 +1,26 @@
-import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import JSONResponse
 from app.routes.protected import router as protected_router
 from app.routes.qa import router as qa_router
 from app.routes.ingest import router as ingest
+from app.utils.logger import logger
+import json
 
-# Logging setup
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Request logging middleware
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Log request details
+        logger.info(f"""
+Request: {request.method} {request.url}
+Headers: {json.dumps(dict(request.headers))}
+Client: {request.client.host}
+        """.strip())
+        
+        response = await call_next(request)
+        return response
 
 # Lifespan context manager replaces on_event handlers
 @asynccontextmanager
@@ -38,6 +46,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add request logging middleware (comment out to disable)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Exception handlers
 @app.exception_handler(HTTPException)

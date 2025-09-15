@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.user import User
 from app.models.personal_access_tokens import PersonalAccessToken
+from app.utils.logger import logger
 
-logger = logging.getLogger("authenticate")
 auth_scheme = HTTPBearer(bearerFormat="Token")
 
 
